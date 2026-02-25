@@ -14,6 +14,8 @@ The project has been transitioned from a pure frontend app with mock data to a f
 - **Database**: SQLite with Prisma 6 for type-safe database access.
 - **Proxy**: Vite is configured to proxy `/api` requests to the BFF running on port 3001.
 - **AI Integration**: Gemini 1.5 Flash is integrated via the backend `/api/generate-insights` endpoint.
+- **Hosting**: Configured for **Vercel**. The backend is served as a Serverless Function in the `api/` directory.
+- **Database Persistence**: SQLite is used for this demo. Note that on Vercel, the filesystem is ephemeral, so any data changes (CRUD) will not persist across function restarts. For production, a persistent database like PostgreSQL is recommended.
 
 ## Conclusion
 The BFF pattern is highly effective for this application as it provides a secure, efficient, and maintainable bridge between the React frontend and the data/AI services.

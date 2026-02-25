@@ -8,7 +8,6 @@ dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const port = process.env.PORT || 3001;
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -200,6 +199,12 @@ app.post('/api/generate-insights', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`BFF server running on http://localhost:${port}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 3001;
+  app.listen(port, () => {
+    console.log(`BFF server running on http://localhost:${port}`);
+  });
+}
+
+export default app;
