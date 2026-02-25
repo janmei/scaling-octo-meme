@@ -1,14 +1,25 @@
-import React from 'react';
-import { MOCK_SHIPMENTS } from '../constants';
-import { MapPin, Package, Truck, Calendar, ArrowRight, Map as MapIcon, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { MapPin, Package, Truck, Calendar, ArrowRight, Map as MapIcon, CheckCircle, Loader2 } from 'lucide-react';
+import { Shipment } from '../types';
 
 export const CreateShipment: React.FC = () => {
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/shipments')
+      .then(res => res.json())
+      .then(setShipments)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-8">
       <header className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-black text-slate-900">Create New Shipment</h2>
-          <p className="text-slate-500 mt-1">Configure your package and choose a carrier to generate labels.</p>
+          <p className="text-slate-500 mt-1">Configure your package and choose a carrier to generate labels. (via BFF)</p>
         </div>
         <div className="flex gap-3">
           <button className="px-4 py-2 border border-slate-300 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors">Save Draft</button>
@@ -148,20 +159,26 @@ export const CreateShipment: React.FC = () => {
               <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Live</span>
             </div>
             <div className="space-y-6">
-              {MOCK_SHIPMENTS.map((shipment) => (
-                <div key={shipment.id} className="relative pl-4 border-l-2 border-slate-100">
-                  <div className={`absolute left-[-2px] top-0 bottom-0 w-0.5 ${shipment.color}`}></div>
-                  <p className="text-[10px] font-black text-primary mb-1">{shipment.id}</p>
-                  <p className="text-sm font-bold text-slate-900">{shipment.status}</p>
-                  <p className="text-xs text-slate-500 mt-1">{shipment.eta || `Courier: ${shipment.courier}`}</p>
-                  <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${shipment.color}`}
-                      style={{ width: `${shipment.progress}%` }}
-                    ></div>
-                  </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
-              ))}
+              ) : (
+                shipments.map((shipment) => (
+                  <div key={shipment.id} className="relative pl-4 border-l-2 border-slate-100">
+                    <div className={`absolute left-[-2px] top-0 bottom-0 w-0.5 ${shipment.color}`}></div>
+                    <p className="text-[10px] font-black text-primary mb-1">{shipment.id}</p>
+                    <p className="text-sm font-bold text-slate-900">{shipment.status}</p>
+                    <p className="text-xs text-slate-500 mt-1">{shipment.eta || `Courier: ${shipment.courier}`}</p>
+                    <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${shipment.color}`}
+                        style={{ width: `${shipment.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             <button className="w-full mt-8 py-2 text-sm font-bold text-primary flex items-center justify-center gap-1 hover:underline transition-all group">
               View All Shipments

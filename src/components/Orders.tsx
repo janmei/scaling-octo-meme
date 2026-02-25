@@ -1,14 +1,25 @@
-import React from 'react';
-import { MOCK_ORDERS } from '../constants';
-import { Plus, Search, Filter, Eye, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Plus, Search, Filter, Eye, Edit, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Order } from '../types';
 
 export const Orders: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/orders')
+      .then(res => res.json())
+      .then(setOrders)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-8">
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-black text-slate-900">Orders</h2>
-          <p className="text-slate-500 mt-1">Track, manage and process all customer shipments globally.</p>
+          <p className="text-slate-500 mt-1">Track, manage and process all customer shipments globally. (via BFF)</p>
         </div>
         <button className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary-hover transition-colors flex items-center gap-2">
           <Plus size={16} />
@@ -44,58 +55,64 @@ export const Orders: React.FC = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Qty</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {MOCK_ORDERS.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4 text-sm font-bold text-primary">{order.id}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-slate-900">{order.customer}</p>
-                    <p className="text-xs text-slate-400">{order.location}</p>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{order.product}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600 text-center">{order.quantity}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-900">${order.total.toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      order.status === 'In Transit' ? 'bg-blue-50 text-blue-600' :
-                      order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600' :
-                      order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
-                      'bg-slate-100 text-slate-600'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5">
-                        <Eye size={18} />
-                      </button>
-                      <button className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5">
-                        <Edit size={18} />
-                      </button>
-                    </div>
-                  </td>
+        <div className="overflow-x-auto min-h-[400px]">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order ID</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Qty</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4 text-sm font-bold text-primary">{order.id}</td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-slate-900">{order.customer}</p>
+                      <p className="text-xs text-slate-400">{order.location}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{order.product}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-center">{order.quantity}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">${order.total.toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                        order.status === 'In Transit' ? 'bg-blue-50 text-blue-600' :
+                        order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600' :
+                        order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5">
+                          <Eye size={18} />
+                        </button>
+                        <button className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5">
+                          <Edit size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs text-slate-500">Showing 1 to 5 of 248 entries</p>
+          <p className="text-xs text-slate-500">Showing {orders.length} entries</p>
           <div className="flex items-center gap-1">
             <button className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100">
               <ChevronLeft size={18} />

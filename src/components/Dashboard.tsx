@@ -1,7 +1,7 @@
-import React from 'react';
-import { MOCK_METRICS, MOCK_ORDERS } from '../constants';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { TrendingUp, List, Clock, CheckCircle, CreditCard } from 'lucide-react';
+import { TrendingUp, List, Clock, CheckCircle, CreditCard, Loader2, Sparkles } from 'lucide-react';
+import { Metric, Order } from '../types';
 
 const IconMap: Record<string, any> = {
   list_alt: List,
@@ -10,13 +10,59 @@ const IconMap: Record<string, any> = {
   payments: CreditCard
 };
 
+interface DashboardData {
+  metrics: Metric[];
+  recentOrders: Order[];
+}
+
 export const Dashboard: React.FC = () => {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<string>('');
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then(res => res.json())
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const generateInsights = async () => {
+    if (!data) return;
+    setLoadingInsights(true);
+    try {
+      const response = await fetch('/api/generate-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data })
+      });
+      const result = await response.json();
+      setInsights(result.insights);
+    } catch (error) {
+      console.error('Failed to generate insights:', error);
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
   return (
     <div className="space-y-8">
       <header className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-black text-slate-900">Overview</h2>
-          <p className="text-slate-500 mt-1">Real-time logistics and sales performance</p>
+          <p className="text-slate-500 mt-1">Real-time logistics and sales performance (via BFF)</p>
         </div>
         <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200">
           {['7 Days', '30 Days', '12 Months'].map((range) => (
@@ -33,7 +79,7 @@ export const Dashboard: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {MOCK_METRICS.map((metric, idx) => {
+        {data.metrics.map((metric, idx) => {
           const Icon = IconMap[metric.icon] || List;
           return (
             <motion.div
@@ -61,29 +107,56 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-bold text-lg">Weekly Trends</h3>
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
-              <TrendingUp size={14} />
-              15% increase
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="font-bold text-lg">Weekly Trends</h3>
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
+                <TrendingUp size={14} />
+                15% increase
+              </div>
+            </div>
+            <div className="h-64 flex items-end justify-between gap-2">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
+                const heights = [40, 60, 100, 70, 50, 80, 90];
+                return (
+                  <div key={day} className="flex-1 flex flex-col items-center gap-3">
+                    <div
+                      className={`w-full rounded-t-lg transition-all duration-500 ${
+                        day === 'Wed' ? 'bg-primary' : 'bg-primary/30'
+                      }`}
+                      style={{ height: `${heights[i]}%` }}
+                    ></div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="h-64 flex items-end justify-between gap-2">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-              const heights = [40, 60, 100, 70, 50, 80, 90];
-              return (
-                <div key={day} className="flex-1 flex flex-col items-center gap-3">
-                  <div 
-                    className={`w-full rounded-t-lg transition-all duration-500 ${
-                      day === 'Wed' ? 'bg-primary' : 'bg-primary/30'
-                    }`}
-                    style={{ height: `${heights[i]}%` }}
-                  ></div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day}</span>
+
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-xl border border-slate-800 shadow-lg text-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <Sparkles size={20} className="text-amber-400" />
+                AI Logistics Insights
+              </h3>
+              <button
+                onClick={generateInsights}
+                disabled={loadingInsights}
+                className="px-4 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                {loadingInsights ? 'Analyzing...' : 'Generate Insights'}
+              </button>
+            </div>
+            {insights ? (
+              <div className="prose prose-invert max-w-none">
+                <div className="text-sm text-slate-300 whitespace-pre-line">
+                  {insights}
                 </div>
-              );
-            })}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 italic">Click the button to generate AI-powered insights from your logistics data.</p>
+            )}
           </div>
         </div>
 
@@ -93,7 +166,7 @@ export const Dashboard: React.FC = () => {
             <button className="text-xs font-bold text-primary hover:underline">View All</button>
           </div>
           <div className="space-y-4">
-            {MOCK_ORDERS.slice(0, 4).map((order) => (
+            {data.recentOrders.map((order) => (
               <div key={order.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
                 <div className="size-10 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
                   {order.customer.split(' ').map(n => n[0]).join('')}
