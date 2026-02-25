@@ -1,6 +1,8 @@
-import { Order, Shipment, Metric } from './types';
+import { PrismaClient } from '@prisma/client';
 
-export const MOCK_ORDERS: Order[] = [
+const prisma = new PrismaClient();
+
+const MOCK_ORDERS = [
   {
     id: '#ORD-8821',
     customer: 'Sarah Jenkins',
@@ -53,7 +55,7 @@ export const MOCK_ORDERS: Order[] = [
   }
 ];
 
-export const MOCK_SHIPMENTS: Shipment[] = [
+const MOCK_SHIPMENTS = [
   {
     id: 'TRK-9902120',
     status: 'In Transit - Chicago, IL',
@@ -77,33 +79,33 @@ export const MOCK_SHIPMENTS: Shipment[] = [
   }
 ];
 
-export const MOCK_METRICS: Metric[] = [
-  {
-    label: 'Total Orders',
-    value: '2,450',
-    change: '+12%',
-    trend: 'up',
-    icon: 'list_alt'
-  },
-  {
-    label: 'Pending Shipments',
-    value: '120',
-    change: '+5%',
-    trend: 'up',
-    icon: 'pending_actions'
-  },
-  {
-    label: 'Delivered Today',
-    value: '45',
-    change: '-2%',
-    trend: 'down',
-    icon: 'check_circle'
-  },
-  {
-    label: 'Revenue',
-    value: '$12,400',
-    change: '+8%',
-    trend: 'up',
-    icon: 'payments'
+async function main() {
+  console.log('Start seeding...');
+
+  // Clear existing data
+  await prisma.order.deleteMany();
+  await prisma.shipment.deleteMany();
+
+  for (const order of MOCK_ORDERS) {
+    await prisma.order.create({
+      data: order,
+    });
   }
-];
+
+  for (const shipment of MOCK_SHIPMENTS) {
+    await prisma.shipment.create({
+      data: shipment,
+    });
+  }
+
+  console.log('Seeding finished.');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
