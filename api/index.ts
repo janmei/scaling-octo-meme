@@ -94,7 +94,6 @@ app.get('/api/orders', async (req, res) => {
     const orders = await prisma.order.findMany();
     res.json(orders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
@@ -106,7 +105,6 @@ app.post('/api/orders', async (req, res) => {
     });
     res.status(201).json(order);
   } catch (error) {
-    console.error('Error creating order:', error);
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
@@ -120,7 +118,6 @@ app.put('/api/orders/:id', async (req, res) => {
     });
     res.json(order);
   } catch (error) {
-    console.error('Error updating order:', error);
     res.status(500).json({ error: 'Failed to update order' });
   }
 });
@@ -133,7 +130,6 @@ app.delete('/api/orders/:id', async (req, res) => {
     });
     res.status(204).send();
   } catch (error) {
-    console.error('Error deleting order:', error);
     res.status(500).json({ error: 'Failed to delete order' });
   }
 });
@@ -145,7 +141,6 @@ app.get('/api/shipments', async (req, res) => {
     const shipments = await prisma.shipment.findMany();
     res.json(shipments);
   } catch (error) {
-    console.error('Error fetching shipments:', error);
     res.status(500).json({ error: 'Failed to fetch shipments' });
   }
 });
@@ -157,7 +152,6 @@ app.post('/api/shipments', async (req, res) => {
     });
     res.status(201).json(shipment);
   } catch (error) {
-    console.error('Error creating shipment:', error);
     res.status(500).json({ error: 'Failed to create shipment' });
   }
 });
@@ -171,7 +165,6 @@ app.put('/api/shipments/:id', async (req, res) => {
     });
     res.json(shipment);
   } catch (error) {
-    console.error('Error updating shipment:', error);
     res.status(500).json({ error: 'Failed to update shipment' });
   }
 });
@@ -184,7 +177,6 @@ app.delete('/api/shipments/:id', async (req, res) => {
     });
     res.status(204).send();
   } catch (error) {
-    console.error('Error deleting shipment:', error);
     res.status(500).json({ error: 'Failed to delete shipment' });
   }
 });
