@@ -18,14 +18,29 @@ interface DashboardData {
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<string>('');
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   useEffect(() => {
     fetch('/api/dashboard')
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error)
+      .then(async res => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server error: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (!data || !Array.isArray(data.metrics)) {
+          throw new Error('Invalid data format received from server');
+        }
+        setData(data);
+      })
+      .catch(err => {
+        console.error('Dashboard fetch error:', err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -51,6 +66,23 @@ export const Dashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+        <div className="bg-rose-50 text-rose-600 p-6 rounded-xl border border-rose-100 max-w-md text-center">
+          <h3 className="font-bold text-lg mb-2">Failed to load dashboard</h3>
+          <p className="text-sm opacity-90">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-bold hover:bg-rose-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

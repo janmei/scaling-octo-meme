@@ -5,12 +5,27 @@ import { Order } from '../types';
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/orders')
-      .then(res => res.json())
-      .then(setOrders)
-      .catch(console.error)
+      .then(async res => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server error: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received from server');
+        }
+        setOrders(data);
+      })
+      .catch(err => {
+        console.error('Orders fetch error:', err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -59,6 +74,17 @@ export const Orders: React.FC = () => {
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+              <p className="text-rose-600 font-bold mb-2">Failed to load orders</p>
+              <p className="text-xs text-slate-500 max-w-sm">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Retry
+              </button>
             </div>
           ) : (
             <table className="w-full text-left">
